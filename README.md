@@ -1,6 +1,6 @@
 # trackit
 
-A mobileapplication to track the income and expend
+A mobileapplication to track the income and expense
 
 ## Getting Started
 
