@@ -3,7 +3,8 @@ import 'package:trackit/screens/transaction_screen.dart';
 import 'package:trackit/screens/budget_screen.dart';
 import 'package:trackit/screens/summary_screen.dart';
 import 'package:trackit/screens/settings_screen.dart';
-import 'package:trackit/widgets/bottom_nav_bar.dart'; // Import the BottomNavBar widget
+import 'package:trackit/widgets/bottom_nav_bar.dart';
+import 'package:trackit/screens/add_transaction_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -11,19 +12,24 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
   int _selectedIndex = 0;
 
-  // List of screens to navigate to based on the selected index
   final List<Widget> _screens = [
-    TransactionScreen(), // Summary screen
-    BudgetScreen(), // Transaction screen
-    SummaryScreen(), // Budget screen
-    SettingsScreen(), // Settings screen
+    TransactionScreen(),
+    BudgetScreen(),
+    SummaryScreen(),
+    SettingsScreen(),
   ];
 
-  // Navigation function for bottom navigation bar
   void _onItemTapped(int index) {
     setState(() {
+      _currentIndex = index;
+      if (index != 2) {
+        if (index > 2) {
+          index--;
+        }
+      }
       _selectedIndex = index;
     });
   }
@@ -31,11 +37,50 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex], // Display the selected screen
+      body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavBar(
-        // Use the BottomNavBar widget
-        currentIndex: _selectedIndex,
+        currentIndex: _currentIndex,
         onTap: _onItemTapped,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: Container(
+        margin: EdgeInsets.only(top: 25),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 60,
+              height: 60,
+              child: FloatingActionButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddTransactionScreen(),
+                    ),
+                  );
+                },
+                child: Icon(
+                  Icons.add,
+                  color: Colors.white,
+                  size: 36,
+                ),
+                backgroundColor: Colors.blue,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50.0),
+                ),
+              ),
+            ),
+            SizedBox(height: 1),
+            Text(
+              'จดเพิ่ม',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

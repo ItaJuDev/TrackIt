@@ -16,9 +16,8 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => HomeScreen(),
-        '/transaction': (context) =>
-            TransactionScreen(), // Define this screen later
-        '/settings': (context) => SettingsScreen(), // Define this screen later
+        '/transaction': (context) => TransactionScreen(),
+        '/settings': (context) => SettingsScreen(),
       },
       theme: ThemeData(
         primarySwatch: Colors.blue,

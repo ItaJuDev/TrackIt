@@ -1,0 +1,52 @@
+[
+    {
+      "amount": 15000,
+      "date": "2024-02-23",
+      "isIncome": true,
+      "category": "เงินเดือน",
+      "details": "เงินเดือนเดือนนี้"
+    },
+    {
+      "amount": 150,
+      "date": "2024-02-23",
+      "isIncome": false,
+      "category": "อาหาร",
+      "details": "ส้มตำ"
+    },
+    {
+      "amount": 20,
+      "date": "2024-02-23",
+      "isIncome": false,
+      "category": "เครื่องดื่ม",
+      "details": "น้ำส้ม"
+    },
+    {
+      "amount": 5000,
+      "date": "2024-02-23",
+      "isIncome": true,
+      "category": "โบนัส",
+      "details": "ค่าทำ OT"
+    },
+    {
+      "amount": 10,
+      "date": "2024-02-23",
+      "isIncome": false,
+      "category": "เครื่องดื่ม",
+      "details": "น้ำเปล่า"
+    },
+    {
+      "amount": 200,
+      "date": "2024-02-23",
+      "isIncome": false,
+      "category": "ทั่วไป",
+      "details": "สบู่"
+    },
+    {
+      "amount": 1000,
+      "date": "2024-02-23",
+      "isIncome": false,
+      "category": "เดินทาง",
+      "details": "ค่าน้ำมัน"
+    }
+  ]
+  
