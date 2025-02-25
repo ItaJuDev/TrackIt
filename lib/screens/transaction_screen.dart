@@ -19,6 +19,21 @@ class _TransactionScreenState extends State<TransactionScreen> {
     _transactions = loadTransactions();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _refreshData(); // Reload transactions when returning to this screen
+  }
+
+  Future<void> _refreshData() async {
+    setState(() {
+      debugPrint('Refreshing data...');
+      _transactions = loadTransactions();
+
+      buildTransactionList(_transactions as List<Transaction>);
+    });
+  }
+
   Future<List<Transaction>> loadTransactions() async {
     // Load JSON from assets
     String jsonString = await rootBundle.loadString('assets/transaction.json');
@@ -72,20 +87,23 @@ class _TransactionScreenState extends State<TransactionScreen> {
               SizedBox(height: 60),
               // Transaction List
               Expanded(
-                child: FutureBuilder<List<Transaction>>(
-                  future: _transactions,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(
-                          child: Text('เกิดข้อผิดพลาดในการโหลดข้อมูล'));
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Center(child: Text('ไม่มีข้อมูลธุรกรรม'));
-                    } else {
-                      return buildTransactionList(snapshot.data!);
-                    }
-                  },
+                child: RefreshIndicator(
+                  onRefresh: _refreshData, // Trigger the refresh
+                  child: FutureBuilder<List<Transaction>>(
+                    future: _transactions,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(
+                            child: Text('เกิดข้อผิดพลาดในการโหลดข้อมูล'));
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return Center(child: Text('ไม่มีข้อมูลธุรกรรม'));
+                      } else {
+                        return buildTransactionList(snapshot.data!);
+                      }
+                    },
+                  ),
                 ),
               ),
             ],
@@ -114,7 +132,30 @@ class _TransactionScreenState extends State<TransactionScreen> {
       padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
       itemCount: transactions.length,
       itemBuilder: (context, index) {
-        return TransactionCard(transaction: transactions[index]);
+        final transaction = transactions[index];
+
+        return Dismissible(
+          key: Key(
+              transaction.date + transaction.amount.toString()), // Unique key
+          direction: DismissDirection.endToStart,
+          background: ClipRRect(
+            borderRadius: BorderRadius.circular(15), // Adjust as needed
+            child: Container(
+              alignment: Alignment.centerRight,
+              padding: EdgeInsets.only(right: 20),
+              color: Colors.red,
+              child: Icon(Icons.delete, color: Colors.white),
+            ),
+          ),
+          onDismissed: (direction) {
+            setState(() {
+              transactions.removeAt(index);
+            });
+            // await saveTransactions(transactions);
+            // _refreshData();
+          },
+          child: TransactionCard(transaction: transaction),
+        );
       },
     );
   }

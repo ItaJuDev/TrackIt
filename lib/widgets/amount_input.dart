@@ -37,13 +37,13 @@ class _AmountInputState extends State<AmountInput> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey[200],
+        color: Colors.white,
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: ListTile(
         leading: Icon(
-          widget.isIncome ? Icons.add : Icons.remove,
-          color: widget.isIncome ? Colors.green : Colors.red,
+          !widget.isIncome ? Icons.add : Icons.remove,
+          color: !widget.isIncome ? Colors.green : Colors.red,
         ),
         title: TextFormField(
           controller: widget.controller,

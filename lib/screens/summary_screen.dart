@@ -69,7 +69,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
 
     // Pie Chart for Expenses
     List<PieChartSectionData> pieSections = categoryTotals.entries.map((entry) {
-      double percentage = (entry.value / totalExpense) * 100;
+      double total =
+          showIncome ? totalIncome : totalExpense; // Use correct total
+      double percentage = (entry.value / total) * 100;
+
       return PieChartSectionData(
         color: getCategoryColor(entry.key),
         value: percentage,
@@ -86,7 +89,13 @@ class _SummaryScreenState extends State<SummaryScreen> {
             top: MediaQuery.of(context).padding.top + 10,
             bottom: 20,
           ),
-          color: Colors.purple,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.purple, Colors.deepPurple],
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+            ),
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -144,12 +153,12 @@ class _SummaryScreenState extends State<SummaryScreen> {
         // Transaction List
         Expanded(
           child: ListView(
-            children: filteredTransactions.map((t) {
+            children: categoryTotals.entries.map((entry) {
               return ListTile(
                 leading:
-                    Icon(Icons.category, color: getCategoryColor(t.category)),
-                title: Text(t.category),
-                trailing: Text('${t.amount.toStringAsFixed(0)}'),
+                    Icon(Icons.category, color: getCategoryColor(entry.key)),
+                title: Text(entry.key),
+                trailing: Text('${entry.value.toStringAsFixed(0)} บาท'),
               );
             }).toList(),
           ),

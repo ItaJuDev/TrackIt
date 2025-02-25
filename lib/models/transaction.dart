@@ -1,6 +1,6 @@
 class Transaction {
   final double amount;
-  final DateTime date;
+  final String date;
   final bool isIncome;
   final String category;
   final String details;
@@ -16,10 +16,20 @@ class Transaction {
   factory Transaction.fromJson(Map<String, dynamic> json) {
     return Transaction(
       amount: json['amount'].toDouble(),
-      date: DateTime.parse(json['date']),
+      date: json['date'],
       isIncome: json['isIncome'],
       category: json['category'],
       details: json['details'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'amount': amount,
+      'date': date,
+      'isIncome': isIncome,
+      'category': category,
+      'details': details,
+    };
   }
 }

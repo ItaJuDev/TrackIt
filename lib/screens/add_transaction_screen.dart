@@ -1,8 +1,11 @@
 import 'dart:convert';
+// import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:trackit/models/transaction.dart';
 import 'package:trackit/widgets/show_category.dart';
 import 'package:trackit/widgets/amount_input.dart';
+import 'package:trackit/services/save_transaction.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   @override
@@ -11,9 +14,11 @@ class AddTransactionScreen extends StatefulWidget {
 
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
   bool _isIncome = false;
-  String _selectedCategory = 'อาหาร'; // Default category
+  String _selectedCategory = '';
   final TextEditingController _amountController = TextEditingController();
-  late Future<List<String>> _categories;
+  final TextEditingController _detailsController = TextEditingController();
+
+  late Future<Map<String, List<String>>> _categories;
 
   @override
   void initState() {
@@ -28,18 +33,27 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   }
 
   // Load categories from a JSON file
-  Future<List<String>> _loadCategories() async {
+  Future<Map<String, List<String>>> _loadCategories() async {
     String jsonString = await rootBundle.loadString('assets/category.json');
-    List<dynamic> jsonList = json.decode(jsonString);
-    return jsonList.map((category) => category.toString()).toList();
+    Map<String, dynamic> jsonMap = json.decode(jsonString);
+    List<String> incomeCategories = List<String>.from(jsonMap['income']);
+    List<String> expenseCategories = List<String>.from(jsonMap['expense']);
+    return {
+      'income': incomeCategories,
+      'expense': expenseCategories,
+    };
   }
 
-  void _showCategorySelector(BuildContext context, List<String> categories) {
+  void _showCategorySelector(
+      BuildContext context, Map<String, List<String>> categories) {
+    List<String> selectedCategories =
+        !_isIncome ? categories['income']! : categories['expense']!;
+
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
         return CategorySelector(
-          categories: categories,
+          categories: selectedCategories,
           onCategorySelected: (category) {
             setState(() {
               _selectedCategory = category;
@@ -62,9 +76,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           },
         ),
       ),
-      body: Padding(
+      body: Container(
+        color: Colors.grey[200], // Set background color
         padding: const EdgeInsets.all(16.0),
-        child: FutureBuilder<List<String>>(
+        child: FutureBuilder<Map<String, List<String>>>(
           future: _categories,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -74,7 +89,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
               return Center(child: Text('No categories available'));
             } else {
-              // Categories loaded successfully
               return Form(
                 child: Column(
                   children: [
@@ -83,11 +97,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       onPressed: (int index) {
                         setState(() {
                           _isIncome = index == 1;
+                          _selectedCategory =
+                              !_isIncome ? "เงินเดือน" : "อาหาร";
                         });
                       },
                       borderRadius: BorderRadius.circular(8.0),
                       selectedColor: Colors.white,
-                      fillColor: Colors.purple[200],
+                      fillColor: Colors.purple[300],
                       children: [
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -108,33 +124,57 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           _showCategorySelector(context, snapshot.data!),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.grey[200],
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                         child: ListTile(
                           leading: Icon(Icons.category),
                           title: Text('เลือกหมวดหมู่/แท็ก'),
-                          subtitle: Text(_selectedCategory),
+                          subtitle: Text(
+                            _selectedCategory.isEmpty
+                                ? (!_isIncome ? "เงินเดือน" : "อาหาร")
+                                : _selectedCategory,
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                       child: ListTile(
                         leading: Icon(Icons.note),
-                        title: Text('เพิ่มโน้ต'),
+                        title: TextFormField(
+                          controller: _detailsController,
+                          decoration: InputDecoration(hintText: 'เพิ่มโน็ต'),
+                        ),
                       ),
                     ),
                     Spacer(),
                     ElevatedButton(
                       onPressed: () {
+                        if (_amountController.text.isEmpty) return;
+
                         final enteredAmount = _amountController.text;
-                        // Save the transaction logic here
-                        Navigator.pop(context); // Close the screen after saving
+                        final newTransaction = Transaction(
+                          amount: double.parse(enteredAmount),
+                          date: DateTime.now().toString(),
+                          isIncome: !_isIncome,
+                          category: _selectedCategory.isEmpty
+                              ? (!_isIncome ? "เงินเดือน" : "อาหาร")
+                              : _selectedCategory,
+                          details: _detailsController.text,
+                        );
+
+                        onWriteJsonFile(newTransaction);
+
+                        try {
+                          Navigator.pop(context);
+                        } catch (e) {
+                          debugPrint("Error closing the screen: $e");
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         side: BorderSide(color: Colors.purple),
@@ -145,45 +185,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 ),
               );
             }
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class AmountInput extends StatelessWidget {
-  final TextEditingController controller;
-  final bool isIncome;
-
-  AmountInput({required this.controller, required this.isIncome});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        border: Border.all(color: Colors.grey),
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: ListTile(
-        leading: Icon(
-          isIncome ? Icons.add : Icons.remove,
-          color: isIncome ? Colors.green : Colors.red,
-        ),
-        title: TextFormField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(hintText: '0 ฿'),
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter an amount';
-            } else if (double.tryParse(value) == null ||
-                double.parse(value) <= 0) {
-              return 'Please enter a valid amount';
-            }
-            return null;
           },
         ),
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trackit/screens/transaction_screen.dart';
-import 'package:trackit/screens/budget_screen.dart';
+import 'package:trackit/screens/goal_screen.dart';
 import 'package:trackit/screens/summary_screen.dart';
 import 'package:trackit/screens/settings_screen.dart';
 import 'package:trackit/widgets/bottom_nav_bar.dart';
@@ -17,7 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = [
     TransactionScreen(),
-    BudgetScreen(),
+    GoalScreen(),
     SummaryScreen(),
     SettingsScreen(),
   ];
