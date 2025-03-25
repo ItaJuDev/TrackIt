@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trackit/screens/add_goal_screen.dart';
+import 'package:trackit/screens/Target/add_goal_screen.dart';
 
 class GoalScreen extends StatefulWidget {
   @override

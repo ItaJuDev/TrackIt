@@ -1,8 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:fl_chart/fl_chart.dart';
-import 'package:trackit/models/transaction.dart';
+import 'package:intl/intl.dart';
+import 'package:month_picker_dialog/month_picker_dialog.dart';
+import 'package:trackit/data/local_db.dart';
 import 'package:trackit/widgets/Summarize/summary_card.dart';
 
 class SummaryScreen extends StatefulWidget {
@@ -11,83 +11,103 @@ class SummaryScreen extends StatefulWidget {
 }
 
 class _SummaryScreenState extends State<SummaryScreen> {
-  late Future<List<TransactionModel>> _transactions;
-  bool showIncome =
-      true; // State to track selected summary (true = Income, false = Expense)
+  bool showIncome = true;
+  DateTime selectedDate = DateTime.now();
+  String filterMode = 'Monthly';
 
-  @override
-  void initState() {
-    super.initState();
-    _transactions = loadTransactions();
+  List<Transaction> _filterTransactions(List<Transaction> all) {
+    return all.where((t) {
+      final tDate = DateTime.parse(t.date);
+      return tDate.year == selectedDate.year &&
+          tDate.month == selectedDate.month;
+    }).toList();
   }
 
-  // ===== Load Data from JSON ======
-  Future<List<TransactionModel>> loadTransactions() async {
-    String jsonString = await rootBundle.loadString('assets/transaction.json');
-    List<dynamic> jsonList = json.decode(jsonString);
-    return jsonList.map((json) => TransactionModel.fromJson(json)).toList();
+  String _formattedDate() {
+    return DateFormat('MMM yyyy').format(selectedDate);
+  }
+
+  void _goToPreviousPeriod() {
+    setState(() {
+      selectedDate = DateTime(selectedDate.year, selectedDate.month - 1);
+    });
+  }
+
+  void _goToNextPeriod() {
+    setState(() {
+      selectedDate = DateTime(selectedDate.year, selectedDate.month + 1);
+    });
+  }
+
+  Future<void> _selectDate() async {
+    final picked = await showMonthPicker(
+        context: context,
+        initialDate: selectedDate,
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+        headerColor: Colors.purple,
+        unselectedMonthTextColor: Colors.black);
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder<List<TransactionModel>>(
-        future: _transactions,
+      backgroundColor: Colors.grey[200],
+      body: StreamBuilder<List<Transaction>>(
+        stream: localDb.watchAllTransactions(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('เกิดข้อผิดพลาด'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('ไม่มีข้อมูล'));
-          } else {
-            return buildSummary(snapshot.data!);
           }
+          final transactions = _filterTransactions(snapshot.data!);
+          return buildSummary(transactions);
         },
       ),
     );
   }
 
-// Inside buildSummary()
-  Widget buildSummary(List<TransactionModel> transactions) {
+  Widget buildSummary(List<Transaction> transactions) {
     double totalIncome = transactions
         .where((t) => t.isIncome)
-        .fold(0, (sum, item) => sum + item.amount);
+        .fold(0, (sum, t) => sum + t.amount);
     double totalExpense = transactions
         .where((t) => !t.isIncome)
-        .fold(0, (sum, item) => sum + item.amount);
+        .fold(0, (sum, t) => sum + t.amount);
 
-    // Filter transactions based on selected type
-    List<TransactionModel> filteredTransactions =
+    final filtered =
         transactions.where((t) => t.isIncome == showIncome).toList();
 
-    // Group transactions by category
-    Map<String, double> categoryTotals = {};
-    for (var t in filteredTransactions) {
+    final Map<String, double> categoryTotals = {};
+    for (var t in filtered) {
       categoryTotals[t.category] = (categoryTotals[t.category] ?? 0) + t.amount;
     }
 
-    // Pie Chart for Expenses
-    List<PieChartSectionData> pieSections = categoryTotals.entries.map((entry) {
-      double total =
-          showIncome ? totalIncome : totalExpense; // Use correct total
-      double percentage = (entry.value / total) * 100;
+    final double total = showIncome ? totalIncome : totalExpense;
 
+    final pieSections = categoryTotals.entries.map((entry) {
+      final percent = (entry.value / total) * 100;
       return PieChartSectionData(
+        value: percent,
+        title: '${entry.key}\n${percent.toStringAsFixed(0)}%',
         color: getCategoryColor(entry.key),
-        value: percentage,
-        title: '${entry.key}\n${percentage.toStringAsFixed(0)}%',
         radius: 80,
+        titleStyle: TextStyle(color: Colors.white, fontSize: 12),
       );
     }).toList();
 
     return Column(
       children: [
-        // Header
         Container(
           padding: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + 10,
             bottom: 20,
+            left: 16,
+            right: 16,
           ),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -96,28 +116,36 @@ class _SummaryScreenState extends State<SummaryScreen> {
               end: Alignment.topCenter,
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
             children: [
-              IconButton(
-                icon: Icon(Icons.chevron_left, color: Colors.white),
-                onPressed: () {},
-              ),
-              Text(
-                'ม.ค. 68',
-                style: TextStyle(color: Colors.white, fontSize: 20),
-              ),
-              IconButton(
-                icon: Icon(Icons.chevron_right, color: Colors.white),
-                onPressed: () {},
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.chevron_left, color: Colors.white),
+                    onPressed: _goToPreviousPeriod,
+                  ),
+                  GestureDetector(
+                    onTap: _selectDate,
+                    child: Text(
+                      _formattedDate(),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          decoration: TextDecoration.underline),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.chevron_right, color: Colors.white),
+                    onPressed: _goToNextPeriod,
+                  ),
+                ],
               ),
             ],
           ),
         ),
-
-        // Income & Expense Summary
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           child: Row(
             children: [
               Expanded(
@@ -125,18 +153,18 @@ class _SummaryScreenState extends State<SummaryScreen> {
                   onTap: () => setState(() => showIncome = true),
                   child: SummaryCard(
                     title: 'รายรับ',
-                    value: '$totalIncome',
+                    value: totalIncome.toStringAsFixed(0),
                     isSelected: showIncome,
                   ),
                 ),
               ),
-              SizedBox(width: 20),
+              SizedBox(width: 16),
               Expanded(
                 child: GestureDetector(
                   onTap: () => setState(() => showIncome = false),
                   child: SummaryCard(
                     title: 'รายจ่าย',
-                    value: '$totalExpense',
+                    value: totalExpense.toStringAsFixed(0),
                     isSelected: !showIncome,
                   ),
                 ),
@@ -144,25 +172,27 @@ class _SummaryScreenState extends State<SummaryScreen> {
             ],
           ),
         ),
-
-        Container(
+        SizedBox(
           height: 300,
-          child: PieChart(PieChartData(sections: pieSections)),
+          child: PieChart(
+            PieChartData(
+              sections: pieSections,
+              sectionsSpace: 5,
+              centerSpaceRadius: 70,
+            ),
+          ),
         ),
-
-        // Transaction List
         Expanded(
           child: ListView(
-            children: categoryTotals.entries.map((entry) {
+            children: categoryTotals.entries.map((e) {
               return ListTile(
-                leading:
-                    Icon(Icons.category, color: getCategoryColor(entry.key)),
-                title: Text(entry.key),
-                trailing: Text('${entry.value.toStringAsFixed(0)} บาท'),
+                leading: Icon(Icons.category, color: getCategoryColor(e.key)),
+                title: Text(e.key),
+                trailing: Text('${e.value.toStringAsFixed(0)} บาท'),
               );
             }).toList(),
           ),
-        ),
+        )
       ],
     );
   }
