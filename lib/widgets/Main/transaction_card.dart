@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trackit/models/transaction.dart';
+import 'package:trackit/data/local_db.dart'; // ✅ use Drift model
 
 class TransactionCard extends StatelessWidget {
   final Transaction transaction;
@@ -20,7 +20,7 @@ class TransactionCard extends StatelessWidget {
           transaction.category,
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        subtitle: Text(transaction.details), // Show date
+        subtitle: Text(transaction.details ?? ''),
         trailing: Text(
           '${transaction.amount.toStringAsFixed(2)} ฿',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

@@ -42,24 +42,13 @@ class _AmountInputState extends State<AmountInput> {
       ),
       child: ListTile(
         leading: Icon(
-          !widget.isIncome ? Icons.add : Icons.remove,
-          color: !widget.isIncome ? Colors.green : Colors.red,
+          widget.isIncome ? Icons.add : Icons.remove,
+          color: widget.isIncome ? Colors.green : Colors.red,
         ),
-        title: TextFormField(
+        title: TextField(
           controller: widget.controller,
-          focusNode: _focusNode,
-          keyboardType: TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(hintText: '0 ฿'),
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please enter an amount';
-            } else if (double.tryParse(value) == null ||
-                double.parse(value) <= 0) {
-              return 'Please enter a valid amount';
-            }
-            return null;
-          },
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: 'จำนวนเงิน'),
         ),
       ),
     );

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trackit/widgets/setting_option.dart'; // Ensure this import path is correct for your project.
+import 'package:trackit/widgets/Options/setting_option.dart'; // Ensure this import path is correct for your project.
 
 class SettingsScreen extends StatelessWidget {
   @override

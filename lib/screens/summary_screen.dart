@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:trackit/models/transaction.dart';
-import 'package:trackit/widgets/summary_card.dart';
+import 'package:trackit/widgets/Summarize/summary_card.dart';
 
 class SummaryScreen extends StatefulWidget {
   @override
@@ -11,7 +11,7 @@ class SummaryScreen extends StatefulWidget {
 }
 
 class _SummaryScreenState extends State<SummaryScreen> {
-  late Future<List<Transaction>> _transactions;
+  late Future<List<TransactionModel>> _transactions;
   bool showIncome =
       true; // State to track selected summary (true = Income, false = Expense)
 
@@ -22,16 +22,16 @@ class _SummaryScreenState extends State<SummaryScreen> {
   }
 
   // ===== Load Data from JSON ======
-  Future<List<Transaction>> loadTransactions() async {
+  Future<List<TransactionModel>> loadTransactions() async {
     String jsonString = await rootBundle.loadString('assets/transaction.json');
     List<dynamic> jsonList = json.decode(jsonString);
-    return jsonList.map((json) => Transaction.fromJson(json)).toList();
+    return jsonList.map((json) => TransactionModel.fromJson(json)).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder<List<Transaction>>(
+      body: FutureBuilder<List<TransactionModel>>(
         future: _transactions,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -49,7 +49,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
   }
 
 // Inside buildSummary()
-  Widget buildSummary(List<Transaction> transactions) {
+  Widget buildSummary(List<TransactionModel> transactions) {
     double totalIncome = transactions
         .where((t) => t.isIncome)
         .fold(0, (sum, item) => sum + item.amount);
@@ -58,7 +58,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
         .fold(0, (sum, item) => sum + item.amount);
 
     // Filter transactions based on selected type
-    List<Transaction> filteredTransactions =
+    List<TransactionModel> filteredTransactions =
         transactions.where((t) => t.isIncome == showIncome).toList();
 
     // Group transactions by category
