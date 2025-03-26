@@ -38,6 +38,24 @@ class _GoalScreenState extends State<GoalScreen> {
     setState(() => goalAmount = calculated);
   }
 
+  Future<void> _updateGoalAmount(String mode, double newAmount) async {
+    double dailyAmount = newAmount;
+
+    final now = DateTime.now();
+    if (mode == 'รายเดือน') {
+      final daysInMonth = DateUtils.getDaysInMonth(now.year, now.month);
+      dailyAmount = newAmount / daysInMonth;
+    } else if (mode == 'รายปี') {
+      final isLeapYear =
+          (now.year % 4 == 0 && now.year % 100 != 0) || (now.year % 400 == 0);
+      final daysInYear = isLeapYear ? 366 : 365;
+      dailyAmount = newAmount / daysInYear;
+    }
+    await localDb.delete(localDb.goals).go();
+    await localDb.upsertGoal('รายวัน', dailyAmount); // Always save as daily
+    await _loadGoalAmount();
+  }
+
   void _showEditGoalDialog() {
     final controller =
         TextEditingController(text: goalAmount.toStringAsFixed(0));
@@ -59,8 +77,9 @@ class _GoalScreenState extends State<GoalScreen> {
             onPressed: () async {
               final input = double.tryParse(controller.text);
               if (input != null) {
-                await localDb.upsertGoal(
-                    'รายวัน', input); // always update daily
+                _updateGoalAmount(selectedMode, input);
+                // await localDb.upsertGoal(
+                //     selectedMode, input); // always update daily
                 await _loadGoalAmount(); // recalculate
                 Navigator.pop(context);
               }

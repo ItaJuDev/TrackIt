@@ -104,7 +104,7 @@ class LocalDatabase extends _$LocalDatabase {
 
   // Insert or update goal
   Future<void> upsertGoal(String mode, double amount) async {
-    await into(goals).insertOnConflictUpdate(GoalsCompanion(
+    await await into(goals).insertOnConflictUpdate(GoalsCompanion(
       mode: Value(mode),
       amount: Value(amount),
     ));

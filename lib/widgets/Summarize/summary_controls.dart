@@ -42,7 +42,7 @@ class _SummaryControlsState extends State<SummaryControls> {
 
     return Container(
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 10,
+        top: MediaQuery.of(context).padding.top + 8,
         bottom: 20,
         left: 16,
         right: 16,
