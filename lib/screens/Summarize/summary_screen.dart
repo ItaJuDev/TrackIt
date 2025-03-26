@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:trackit/data/local_db.dart';
 import 'package:trackit/widgets/color_picker_dialog.dart';
 import 'package:trackit/widgets/Summarize/summary_card.dart';
+import 'package:trackit/widgets/Summarize/summary_header.dart';
 import 'package:trackit/widgets/Summarize/summary_chart.dart';
 import 'package:trackit/widgets/Summarize/summary_controls.dart';
 import 'package:trackit/widgets/Summarize/summary_legend.dart';
@@ -129,7 +130,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                         onTap: () => setState(() => showIncome = true),
                         child: SummaryCard(
                           title: 'รายรับ',
-                          value: _getTotal(filtered, true).toStringAsFixed(0),
+                          value: _getTotal(filtered, true).toString(),
                           isSelected: showIncome,
                         ),
                       ),
@@ -140,7 +141,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
                         onTap: () => setState(() => showIncome = false),
                         child: SummaryCard(
                           title: 'รายจ่าย',
-                          value: _getTotal(filtered, false).toStringAsFixed(0),
+                          value: _getTotal(filtered, false).toString(),
                           isSelected: !showIncome,
                         ),
                       ),

@@ -8,9 +8,30 @@ import 'package:trackit/screens/Options/settings_screen.dart'; // Add this scree
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  //await localDb.deleteDatabaseFile();
+  // await localDb.deleteDatabaseFile();
+  await insertDefualtCategory();
   await _checkIdleTime();
   runApp(MyApp());
+}
+
+Future<void> insertDefualtCategory() async {
+// insert defualt categories
+  final defaultCategories = [
+    {'name': 'อาหาร', 'isIncome': false},
+    {'name': 'เดินทาง', 'isIncome': false},
+    {'name': 'บันเทิง', 'isIncome': false},
+    {'name': 'เงินเดือน', 'isIncome': true},
+    {'name': 'ขายของ', 'isIncome': true},
+    {'name': 'ของใช้', 'isIncome': false},
+    {'name': 'ค่าโอที', 'isIncome': true},
+    {'name': 'ค่างานเสริม', 'isIncome': true},
+    {'name': 'น้ำมัน', 'isIncome': false},
+    {'name': 'เครื่องดื่ม', 'isIncome': false},
+  ];
+
+  for (final i in defaultCategories) {
+    await localDb.insertCategory(i['name'] as String, i['isIncome'] as bool);
+  }
 }
 
 Future<void> _checkIdleTime() async {

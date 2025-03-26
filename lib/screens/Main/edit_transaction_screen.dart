@@ -151,10 +151,10 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
             onPressed: () async {
               final name = newCatController.text.trim();
               if (name.isNotEmpty) {
-                await localDb.insertCategory(CategoriesCompanion(
-                  name: drift.Value(name),
-                  isIncome: drift.Value(widget.transaction.isIncome),
-                ));
+                await localDb.insertCategory(
+                  name,
+                  widget.transaction.isIncome,
+                );
                 await fetchCategories();
                 setState(() => selectedCategory = name);
                 Navigator.pop(context);
@@ -170,90 +170,140 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          title: const Text(
-            'แก้ไขรายการ',
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Colors.purple[500],
-          iconTheme: IconThemeData(color: Colors.white)),
-      body: Container(
-        color: Colors.grey[200],
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8.0),
+      backgroundColor: Colors.grey[200],
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              // Gradient Header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.only(top: 80, bottom: 24),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.purple, Colors.deepPurple],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                  ),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
+                  ),
+                ),
+                child: const Center(
+                  child: Text(
+                    'แก้ไขรายการ',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
-              child: ListTile(
-                leading: Icon(
-                  widget.transaction.isIncome ? Icons.add : Icons.remove,
-                  color:
-                      widget.transaction.isIncome ? Colors.green : Colors.red,
-                ),
-                title: TextField(
-                  controller: amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: 'จำนวนเงิน'),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            GestureDetector(
-              onTap: _showCategorySelector,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.category_outlined),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        selectedCategory ?? 'เลือกหมวดหมู่',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: selectedCategory == null
-                              ? Colors.grey
-                              : Colors.black,
+              const SizedBox(height: 20),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      // Amount
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: ListTile(
+                          leading: Icon(
+                            widget.transaction.isIncome
+                                ? Icons.add
+                                : Icons.remove,
+                            color: widget.transaction.isIncome
+                                ? Colors.green
+                                : Colors.red,
+                          ),
+                          title: TextField(
+                            controller: amountController,
+                            keyboardType: TextInputType.number,
+                            decoration:
+                                const InputDecoration(labelText: 'จำนวนเงิน'),
+                          ),
                         ),
                       ),
-                    ),
-                    const Icon(Icons.expand_more),
-                  ],
+                      const SizedBox(height: 20),
+
+                      // Category Selector
+                      GestureDetector(
+                        onTap: _showCategorySelector,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 18),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.category_outlined),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  selectedCategory ?? 'เลือกหมวดหมู่',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: selectedCategory == null
+                                        ? Colors.grey
+                                        : Colors.black,
+                                  ),
+                                ),
+                              ),
+                              const Icon(Icons.expand_more),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Notes
+                      TextField(
+                        controller: detailsController,
+                        decoration: const InputDecoration(
+                          labelText: 'รายละเอียดเพิ่มเติม',
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                      ),
+                      const Spacer(),
+
+                      // Save Button
+                      ElevatedButton(
+                        onPressed: saveChanges,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                        child: const Text(
+                          'บันทึกการเปลี่ยนแปลง',
+                          style: TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
+            ],
+          ),
+          // Back button (overlay style)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 18,
+            left: 4,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
             ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: detailsController,
-              decoration: const InputDecoration(
-                labelText: 'รายละเอียดเพิ่มเติม',
-                filled: true,
-                fillColor: Colors.white,
-              ),
-            ),
-            const Spacer(),
-            ElevatedButton(
-              onPressed: saveChanges,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
-                minimumSize: const Size.fromHeight(48),
-              ),
-              child: const Text(
-                'บันทึกการเปลี่ยนแปลง',
-                style:
-                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

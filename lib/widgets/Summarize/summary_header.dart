@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:trackit/data/local_db.dart';
 import 'package:trackit/widgets/Summarize/summary_card.dart';
 
 class SummaryHeader extends StatelessWidget {
   final List<Transaction> transactions;
+  final formatter = NumberFormat("#,##0.00", "en_US");
 
-  const SummaryHeader({super.key, required this.transactions});
+  SummaryHeader({super.key, required this.transactions});
 
   @override
   Widget build(BuildContext context) {
@@ -19,14 +21,11 @@ class SummaryHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: SummaryCard(
-              title: 'รายรับ', value: '${totalIncome.toStringAsFixed(0)} บาท'),
+          child: SummaryCard(title: 'รายรับ', value: totalIncome.toString()),
         ),
         SizedBox(width: 20),
         Expanded(
-          child: SummaryCard(
-              title: 'รายจ่าย',
-              value: '${totalExpense.toStringAsFixed(0)} บาท'),
+          child: SummaryCard(title: 'รายจ่าย', value: totalExpense.toString()),
         ),
       ],
     );

@@ -1,11 +1,14 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class SummaryCard extends StatelessWidget {
   final String title;
   final String value;
   final bool isSelected;
-
-  const SummaryCard({
+  final formatter = NumberFormat("#,##0.00", "en_US");
+  SummaryCard({
     Key? key,
     required this.title,
     required this.value,
@@ -47,7 +50,7 @@ class SummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            value,
+            '${formatter.format(double.parse(value))}',
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,

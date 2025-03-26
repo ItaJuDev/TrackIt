@@ -49,10 +49,10 @@ class _CategorySelectorSheetState extends State<CategorySelectorSheet> {
             onPressed: () async {
               final name = controller.text.trim();
               if (name.isNotEmpty) {
-                await localDb.insertCategory(CategoriesCompanion(
-                  name: drift.Value(name),
-                  isIncome: drift.Value(widget.isIncome),
-                ));
+                await localDb.insertCategory(
+                  name,
+                  widget.isIncome,
+                );
                 Navigator.pop(context);
                 _loadCategories();
               }

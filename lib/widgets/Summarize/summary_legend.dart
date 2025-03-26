@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:trackit/data/local_db.dart';
 import 'package:trackit/utils/color_utils.dart';
 
@@ -7,8 +8,8 @@ class SummaryLegend extends StatelessWidget {
   final bool showIncome;
   final Map<String, Color> categoryColors;
   final void Function(String category) onEditColor;
-
-  const SummaryLegend({
+  final formatter = NumberFormat("#,##0.00", "en_US");
+  SummaryLegend({
     required this.transactions,
     required this.showIncome,
     required this.categoryColors,
@@ -46,7 +47,7 @@ class SummaryLegend extends StatelessWidget {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           trailing: Text(
-            '${e.value.toStringAsFixed(0)} บาท',
+            '${formatter.format(e.value)} บาท',
             style: TextStyle(
                 fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
           ),

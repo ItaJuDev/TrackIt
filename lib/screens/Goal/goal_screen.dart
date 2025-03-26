@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:trackit/data/local_db.dart';
 
@@ -10,49 +11,36 @@ class GoalScreen extends StatefulWidget {
 class _GoalScreenState extends State<GoalScreen> {
   final List<String> modes = ['รายวัน', 'รายเดือน', 'รายปี'];
   String selectedMode = 'รายวัน';
+  final formatter = NumberFormat("#,##0.00", "en_US");
 
   double goalAmount = 0;
-  double currentSpent = 0;
-  Goal? currentGoal;
-
-  double get progress =>
-      goalAmount == 0 ? 0 : (currentSpent / goalAmount).clamp(0.0, 1.0);
 
   @override
   void initState() {
     super.initState();
-    _loadGoalData();
+    _loadGoalAmount();
   }
 
-  Future<void> _loadGoalData() async {
+  Future<void> _loadGoalAmount() async {
     final dailyGoal = await localDb.getGoalByMode('รายวัน');
-    final spent = await localDb.getSpentAmount(selectedMode);
-    double calculatedGoal = dailyGoal?.amount ?? 0;
-
+    double calculated = dailyGoal?.amount ?? 0;
     final now = DateTime.now();
+
     if (selectedMode == 'รายเดือน') {
       final daysInMonth = DateUtils.getDaysInMonth(now.year, now.month);
-      calculatedGoal *= daysInMonth;
+      calculated *= daysInMonth;
     } else if (selectedMode == 'รายปี') {
       final isLeapYear =
           (now.year % 4 == 0 && now.year % 100 != 0) || (now.year % 400 == 0);
-      calculatedGoal *= isLeapYear ? 366 : 365;
+      calculated *= isLeapYear ? 366 : 365;
     }
 
-    setState(() {
-      goalAmount = calculatedGoal;
-      currentSpent = spent;
-    });
-  }
-
-  Future<void> _updateGoalAmount(double newAmount) async {
-    await localDb.delete(localDb.goals).go();
-    await localDb.upsertGoal(selectedMode, newAmount);
-    _loadGoalData();
+    setState(() => goalAmount = calculated);
   }
 
   void _showEditGoalDialog() {
-    final controller = TextEditingController(text: goalAmount.toString());
+    final controller =
+        TextEditingController(text: goalAmount.toStringAsFixed(0));
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -68,10 +56,12 @@ class _GoalScreenState extends State<GoalScreen> {
             child: Text("ยกเลิก"),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final input = double.tryParse(controller.text);
               if (input != null) {
-                _updateGoalAmount(input);
+                await localDb.upsertGoal(
+                    'รายวัน', input); // always update daily
+                await _loadGoalAmount(); // recalculate
                 Navigator.pop(context);
               }
             },
@@ -80,6 +70,11 @@ class _GoalScreenState extends State<GoalScreen> {
         ],
       ),
     );
+  }
+
+  double calculateProgress(double spent) {
+    if (goalAmount == 0) return 0;
+    return (spent / goalAmount).clamp(0.0, 1.0);
   }
 
   Widget _buildModeSelector() {
@@ -97,9 +92,9 @@ class _GoalScreenState extends State<GoalScreen> {
             labelStyle: TextStyle(
               color: isSelected ? Colors.white : Colors.black,
             ),
-            onSelected: (_) {
+            onSelected: (_) async {
               setState(() => selectedMode = mode);
-              _loadGoalData();
+              await _loadGoalAmount();
             },
           ),
         );
@@ -107,32 +102,7 @@ class _GoalScreenState extends State<GoalScreen> {
     );
   }
 
-  Widget _buildProgressIndicator() {
-    return CircularPercentIndicator(
-      radius: 120.0,
-      lineWidth: 15.0,
-      animation: true,
-      percent: progress,
-      center: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            "${(progress * 100).toStringAsFixed(1)}%",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            "ใช้ไป ${currentSpent.toStringAsFixed(0)} / ${goalAmount.toStringAsFixed(0)} บาท",
-            style: TextStyle(fontSize: 14),
-          ),
-        ],
-      ),
-      progressColor: progress >= 1.0 ? Colors.red : Colors.green,
-      backgroundColor: Colors.grey.shade300,
-      circularStrokeCap: CircularStrokeCap.round,
-    );
-  }
-
-  Widget _buildDetailCard() {
+  Widget _buildDetailCard(double spent) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -145,22 +115,21 @@ class _GoalScreenState extends State<GoalScreen> {
             const SizedBox(height: 10),
             ListTile(
               leading: Icon(Icons.calendar_today, color: Colors.deepPurple),
-              title: Text(
-                "ประเภทเป้าหมาย",
-              ),
-              trailing: Text(selectedMode, style: TextStyle(fontSize: 14)),
+              title: Text("ประเภทเป้าหมาย"),
+              trailing: Text(selectedMode,
+                  style: TextStyle(fontSize: 14, color: Colors.black)),
             ),
             ListTile(
               leading: Icon(Icons.track_changes, color: Colors.deepPurple),
               title: Text("เป้าหมาย"),
-              trailing: Text("${goalAmount.toStringAsFixed(0)} บาท",
-                  style: TextStyle(fontSize: 14)),
+              trailing: Text("${formatter.format(goalAmount)} บาท",
+                  style: TextStyle(fontSize: 14, color: Colors.black)),
             ),
             ListTile(
               leading: Icon(Icons.money_off, color: Colors.deepPurple),
               title: Text("ใช้ไปแล้ว"),
-              trailing: Text("${currentSpent.toStringAsFixed(0)} บาท",
-                  style: TextStyle(fontSize: 14)),
+              trailing: Text("${formatter.format(spent)} บาท",
+                  style: TextStyle(fontSize: 14, color: Colors.black)),
             ),
           ],
         ),
@@ -171,32 +140,115 @@ class _GoalScreenState extends State<GoalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: Text(
-          'เป้าหมายการใช้เงิน',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.purple,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.edit),
-            color: Colors.white,
-            onPressed: _showEditGoalDialog,
-          )
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            _buildModeSelector(),
-            const SizedBox(height: 40),
-            _buildProgressIndicator(),
-            const SizedBox(height: 40),
-            _buildDetailCard(),
-          ],
-        ),
+      backgroundColor: Colors.grey[200],
+      body: StreamBuilder<List<Transaction>>(
+        stream: localDb.watchAllTransactions(),
+        builder: (context, snapshot) {
+          final all = snapshot.data ?? [];
+
+          final now = DateTime.now();
+          final filtered = all.where((t) {
+            if (t.isIncome) return false;
+            final date = DateTime.parse(t.date);
+            if (selectedMode == 'รายวัน') {
+              return date.year == now.year &&
+                  date.month == now.month &&
+                  date.day == now.day;
+            } else if (selectedMode == 'รายเดือน') {
+              return date.year == now.year && date.month == now.month;
+            } else {
+              return date.year == now.year;
+            }
+          }).toList();
+
+          final spent = filtered.fold(0.0, (sum, t) => sum + t.amount);
+          final progress = calculateProgress(spent);
+
+          return Stack(
+            children: [
+              Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.only(top: 70, bottom: 30),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.purple, Colors.deepPurple],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                      ),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'เป้าหมายการใช้เงิน',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildModeSelector(),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        children: [
+                          CircularPercentIndicator(
+                            radius: 120.0,
+                            lineWidth: 15.0,
+                            animation: true,
+                            percent: progress,
+                            center: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "${(progress * 100).toStringAsFixed(1)}%",
+                                  style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  "ใช้ไป ${formatter.format(spent)} / ${formatter.format(goalAmount)} บาท",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            progressColor:
+                                progress >= 1.0 ? Colors.red : Colors.green,
+                            backgroundColor: Colors.grey.shade300,
+                            circularStrokeCap: CircularStrokeCap.round,
+                          ),
+                          const SizedBox(height: 20),
+                          _buildDetailCard(spent),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 4,
+                right: 16,
+                child: IconButton(
+                  icon: Icon(Icons.edit, color: Colors.white),
+                  onPressed: _showEditGoalDialog,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -53,6 +53,10 @@ class _SummaryControlsState extends State<SummaryControls> {
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
         ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

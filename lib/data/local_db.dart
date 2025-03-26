@@ -81,8 +81,18 @@ class LocalDatabase extends _$LocalDatabase {
   // Categories
   Future<List<Category>> getAllCategories() => select(categories).get();
 
-  Future<int> insertCategory(CategoriesCompanion entry) =>
-      into(categories).insert(entry);
+  Future<void> insertCategory(String name, bool isIncome) async {
+    final existing = await (select(categories)
+          ..where((c) => c.name.equals(name) & c.isIncome.equals(isIncome)))
+        .getSingleOrNull();
+
+    if (existing == null) {
+      await into(categories).insert(CategoriesCompanion.insert(
+        name: name,
+        isIncome: Value(isIncome),
+      ));
+    }
+  }
 
   Stream<List<Category>> watchCategories() => select(categories).watch();
 

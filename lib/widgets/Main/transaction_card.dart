@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:trackit/data/local_db.dart'; // ✅ use Drift model
+import 'package:trackit/data/local_db.dart';
+import 'package:intl/intl.dart';
 
 class TransactionCard extends StatelessWidget {
   final Transaction transaction;
+  final formatter = NumberFormat("#,##0.00", "en_US");
 
   TransactionCard({required this.transaction});
 
@@ -22,7 +24,7 @@ class TransactionCard extends StatelessWidget {
         ),
         subtitle: Text(transaction.details ?? ''),
         trailing: Text(
-          '${transaction.amount.toStringAsFixed(2)} ฿',
+          '${formatter.format(transaction.amount)} ฿',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
