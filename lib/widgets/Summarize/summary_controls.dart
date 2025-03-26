@@ -100,7 +100,10 @@ class _SummaryControlsState extends State<SummaryControls> {
                   key: ValueKey<String>(
                     DateFormat('MMM yyyy').format(widget.selectedDate),
                   ),
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
             ),

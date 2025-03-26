@@ -1,5 +1,7 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackit/data/local_db.dart';
 import 'package:trackit/widgets/AddTransaction/amount_input.dart';
 import 'package:trackit/widgets/AddTransaction/category_selector_bottomsheet.dart';
@@ -14,6 +16,8 @@ class AddTransactionScreen extends StatefulWidget {
 
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
   bool isIncome = true;
+  DateTime selectedDate = DateTime.now();
+
   String? selectedCategory;
   final TextEditingController amountController = TextEditingController();
   final TextEditingController detailsController = TextEditingController();
@@ -38,10 +42,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   Future<void> _saveTransaction() async {
     final amount = double.tryParse(amountController.text.trim());
     if (amount == null || selectedCategory == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(
+        'last_transaction_time', DateTime.now().millisecondsSinceEpoch);
 
     final newTransaction = TransactionsCompanion(
       amount: drift.Value(amount),
-      date: drift.Value(DateTime.now().toIso8601String()),
+      date: drift.Value(selectedDate.toIso8601String()), // ← use selected date
       isIncome: drift.Value(isIncome),
       category: drift.Value(selectedCategory!),
       details: drift.Value(detailsController.text.trim()),
@@ -51,13 +58,28 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     Navigator.pop(context);
   }
 
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() => selectedDate = picked);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('เพิ่มรายรับ/รายจ่าย'),
-        backgroundColor: Colors.purple[500],
-      ),
+          title: Text(
+            'เพิ่มรายรับ/รายจ่าย',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.purple[500],
+          iconTheme: IconThemeData(color: Colors.white)),
       body: Container(
         color: Colors.grey[100],
         padding: const EdgeInsets.all(16),
@@ -70,6 +92,31 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   isIncome = value;
                 });
               },
+            ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: _pickDate,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_today_outlined),
+                    const SizedBox(width: 12),
+                    Text(
+                      DateFormat('dd MMM yyyy').format(selectedDate),
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    const Spacer(),
+                    Icon(Icons.edit_calendar),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             AmountInput(controller: amountController, isIncome: isIncome),

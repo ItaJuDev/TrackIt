@@ -21,9 +21,20 @@ class Categories extends Table {
   BoolColumn get isIncome => boolean().withDefault(const Constant(false))();
 }
 
+class Goals extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get mode => text()(); // e.g., 'รายวัน', 'รายเดือน', 'รายปี'
+  RealColumn get amount => real()();
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+        {mode},
+      ];
+}
+
 final localDb = LocalDatabase();
 
-@DriftDatabase(tables: [Transactions, Categories])
+@DriftDatabase(tables: [Transactions, Categories, Goals])
 class LocalDatabase extends _$LocalDatabase {
   LocalDatabase() : super(_openConnection());
 
@@ -77,6 +88,49 @@ class LocalDatabase extends _$LocalDatabase {
 
   Future<int> deleteCategory(int id) {
     return (delete(categories)..where((c) => c.id.equals(id))).go();
+  }
+
+  //Goals
+
+  // Insert or update goal
+  Future<void> upsertGoal(String mode, double amount) async {
+    await into(goals).insertOnConflictUpdate(GoalsCompanion(
+      mode: Value(mode),
+      amount: Value(amount),
+    ));
+  }
+
+// Get goal by mode
+  Future<Goal?> getGoalByMode(String mode) async {
+    return (select(goals)..where((g) => g.mode.equals(mode)))
+        .get()
+        .then((rows) => rows.isNotEmpty ? rows.first : null);
+  }
+
+  Future<double> getSpentAmount(String mode) async {
+    final transactions = await getAllTransactions();
+
+    final now = DateTime.now();
+    final filtered = transactions.where((t) {
+      if (t.isIncome) return false; // Only expenses
+      final date = DateTime.parse(t.date);
+
+      switch (mode) {
+        case 'รายวัน':
+          return date.year == now.year &&
+              date.month == now.month &&
+              date.day == now.day;
+        case 'รายเดือน':
+          return date.year == now.year && date.month == now.month;
+        case 'รายปี':
+          return date.year == now.year;
+        default:
+          return false;
+      }
+    });
+
+    final total = filtered.fold(0.0, (sum, t) => sum + t.amount);
+    return total;
   }
 }
 

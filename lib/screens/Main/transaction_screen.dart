@@ -67,6 +67,35 @@ class _TransactionScreenState extends State<TransactionScreen> {
     }
   }
 
+  //Goals
+  Goal? currentGoal;
+  double goalAmount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGoalData();
+  }
+
+  Future<void> _loadGoalData() async {
+    final dailyGoal = await localDb.getGoalByMode('รายวัน');
+    double calculatedGoal = dailyGoal?.amount ?? 0;
+
+    final now = DateTime.now();
+    if (filterMode == 'รายเดือน') {
+      final daysInMonth = DateUtils.getDaysInMonth(now.year, now.month);
+      calculatedGoal *= daysInMonth;
+    } else if (filterMode == 'รายปี') {
+      final isLeapYear =
+          (now.year % 4 == 0 && now.year % 100 != 0) || (now.year % 400 == 0);
+      calculatedGoal *= isLeapYear ? 366 : 365;
+    }
+
+    setState(() {
+      goalAmount = calculatedGoal;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,7 +106,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.only(top: 50, bottom: 24),
+                padding: const EdgeInsets.only(top: 60, bottom: 24),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Colors.purple, Colors.deepPurple],
@@ -111,7 +140,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 0, vertical: 2),
+                              horizontal: 0, vertical: 14),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -130,6 +159,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                               onChanged: (value) {
                                 if (value != null) {
                                   setState(() => filterMode = value);
+                                  _loadGoalData();
                                 }
                               },
                             ),
@@ -145,18 +175,21 @@ class _TransactionScreenState extends State<TransactionScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const Text(
-                      '500บาท/วัน',
-                      style: TextStyle(
+                    Text(
+                      goalAmount > 0
+                          ? '${goalAmount.toStringAsFixed(0)} บาท / $filterMode'
+                          : 'ไม่มีเป้าหมาย',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                       ),
                     ),
+
                     const SizedBox(height: 12),
                   ],
                 ),
               ),
-              const SizedBox(height: 60),
+              const SizedBox(height: 70),
               Expanded(
                 child: StreamBuilder<List<Transaction>>(
                   stream: localDb.watchAllTransactions(),
@@ -175,7 +208,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
             ],
           ),
           Positioned(
-            top: 170,
+            top: 210,
             left: 20,
             right: 20,
             child: StreamBuilder<List<Transaction>>(

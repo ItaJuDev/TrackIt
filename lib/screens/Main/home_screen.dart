@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trackit/screens/Main/transaction_screen.dart';
-import 'package:trackit/screens/Target/goal_screen.dart';
+import 'package:trackit/screens/Goal/goal_screen.dart';
 import 'package:trackit/screens/Summarize/summary_screen.dart';
 import 'package:trackit/screens/Options/settings_screen.dart';
 import 'package:trackit/screens/AddTransaction/add_transaction_screen.dart';
@@ -83,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 debugPrint("FAB pressed"); // For debug
                 Navigator.of(context).push(_createAnimatedRoute());
               },
-              backgroundColor: Colors.blue,
+              backgroundColor: Colors.purple,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(50),
               ),

@@ -171,9 +171,12 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('แก้ไขรายการ'),
-        backgroundColor: Colors.purple,
-      ),
+          title: const Text(
+            'แก้ไขรายการ',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.purple[500],
+          iconTheme: IconThemeData(color: Colors.white)),
       body: Container(
         color: Colors.grey[200],
         padding: const EdgeInsets.all(16),
