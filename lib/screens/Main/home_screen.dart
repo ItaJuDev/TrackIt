@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trackit/screens/Main/transaction_screen.dart';
 import 'package:trackit/screens/Target/goal_screen.dart';
-import 'package:trackit/screens/summary_screen.dart';
+import 'package:trackit/screens/Summarize/summary_screen.dart';
 import 'package:trackit/screens/Options/settings_screen.dart';
 import 'package:trackit/screens/AddTransaction/add_transaction_screen.dart';
 import 'package:trackit/widgets/bottom_nav_bar.dart';

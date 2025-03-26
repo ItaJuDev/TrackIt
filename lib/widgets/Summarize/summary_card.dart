@@ -12,14 +12,18 @@ class SummaryCard extends StatelessWidget {
     this.isSelected = false,
   }) : super(key: key);
 
+  Color get primaryColor {
+    return title == 'รายรับ' ? Colors.green : Colors.red;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 20),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: isSelected
-            ? Colors.blue.shade100
-            : Colors.white, // Highlight when selected
+        color: isSelected ? primaryColor : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -32,20 +36,22 @@ class SummaryCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(
-            title,
+          AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 300),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: isSelected
-                  ? Colors.blue
-                  : Colors.black, // Change color when selected
+              color: isSelected ? Colors.white : Colors.black,
             ),
+            child: Text(title),
           ),
-          SizedBox(height: 5),
+          const SizedBox(height: 5),
           Text(
             value,
-            style: TextStyle(fontSize: 16),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),

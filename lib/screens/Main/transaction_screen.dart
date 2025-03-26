@@ -11,16 +11,16 @@ class TransactionScreen extends StatefulWidget {
 
 class _TransactionScreenState extends State<TransactionScreen> {
   DateTime selectedDate = DateTime.now();
-  String filterMode = 'Daily';
+  String filterMode = 'รายวัน';
 
   List<Transaction> _filterTransactions(List<Transaction> all) {
     return all.where((t) {
       final tDate = DateTime.parse(t.date);
-      if (filterMode == 'Daily') {
+      if (filterMode == 'รายวัน') {
         return tDate.year == selectedDate.year &&
             tDate.month == selectedDate.month &&
             tDate.day == selectedDate.day;
-      } else if (filterMode == 'Monthly') {
+      } else if (filterMode == 'รายเดือน') {
         return tDate.year == selectedDate.year &&
             tDate.month == selectedDate.month;
       } else {
@@ -30,10 +30,10 @@ class _TransactionScreenState extends State<TransactionScreen> {
   }
 
   String _formattedDate() {
-    if (filterMode == 'Daily') {
+    if (filterMode == 'รายวัน') {
       return DateFormat('dd MMM yyyy').format(selectedDate);
-    } else if (filterMode == 'Monthly') {
-      return DateFormat('MMM yyyy').format(selectedDate);
+    } else if (filterMode == 'รายเดือน') {
+      return DateFormat('MMM yy').format(selectedDate);
     } else {
       return DateFormat('yyyy').format(selectedDate);
     }
@@ -117,11 +117,11 @@ class _TransactionScreenState extends State<TransactionScreen> {
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
-                              dropdownColor: Colors.purple[100],
+                              dropdownColor: Colors.purple[300],
                               value: filterMode,
                               iconEnabledColor: Colors.white,
                               style: const TextStyle(color: Colors.white),
-                              items: ['Daily', 'Monthly', 'Annually']
+                              items: ['รายวัน', 'รายเดือน', 'รายปี']
                                   .map((mode) => DropdownMenuItem(
                                         value: mode,
                                         child: Text(mode),
