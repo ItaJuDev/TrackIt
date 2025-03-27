@@ -5,7 +5,7 @@ class RecommendScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('แนะนำ'),
+        title: Text('แนะนำการใช้งาน'),
       ),
       body: Center(
         child: Text('Recommend Screen'),
